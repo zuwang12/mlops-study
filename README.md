@@ -1,7 +1,7 @@
 # MLOPS Study - Modularization
 
 
-## Toy example - Debt Default Prediction (Dacon Educational Hackathon)
+## Toy example - Debt Default Prediction (Dacon)
 
 본 프로젝트는 Dacon 해커톤 "**채무 불이행 여부 예측 AI 알고리즘 개발**"을 Target으로, 딥러닝 기반 예측 파이프라인을 구축했습니다.  
 **MLOps 모듈화 구조**를 구성이 목표이며, 관리 용이성 및 확장성 등을 고려했습니다.
