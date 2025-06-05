@@ -1,0 +1,7 @@
+train_path: "./data/train.csv"
+test_path: "./data/test.csv"
+output_path: "./submission_JK.csv"
+batch_size: 64
+epochs: 10
+lr: 0.001
+random_seed: 42
