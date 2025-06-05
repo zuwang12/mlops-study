@@ -79,18 +79,88 @@ mlops/
 
 ## 4. 모듈화의 장단점
 
+
 ### 장점
 
-- **유지보수 용이**: 기능별 분리로 코드 가독성 및 수정 용이
-- **재사용성 확보**: 전처리, 모델, 학습 루프 등을 다양한 실험에 활용 가능
-- **설정 관리 효율화**: `config.yaml`을 통해 하이퍼파라미터 및 경로 관리 일원화
-- **확장성 우수**: 모델 구조 변경, 앙상블, AutoML 등 실험 확장에 적합
+#### 유지보수 용이
+- 기능별로 파일을 분리함으로써 코드 가독성과 유지보수성이 높아졌습니다.
+- 예를 들어, 모델 구조를 수정할 경우 `models/JK_model.py`만 수정하면 되고, 학습(`train.py`)이나 추론(`predict.py`) 코드는 그대로 유지할 수 있습니다.
+
+```python
+# models/JK_model.py
+class JKModel(nn.Module):
+    def __init__(self, input_dim):
+        ...
+```
+
+#### 재사용성 확보
+- `utils/preprocessing.py`에 정의된 전처리 함수는 학습과 추론 양쪽에서 재사용됩니다.
+- 전처리 방식 변경 시에도 한 파일만 수정하면 되므로 코드 일관성을 유지할 수 있습니다.
+
+```python
+# utils/preprocessing.py
+def preprocess(train_df, test_df, target_col='채무 불이행 여부'):
+    ...
+```
+
+#### 설정 관리 효율화
+- 실험에 필요한 하이퍼파라미터와 경로 등을 `configs/config.yaml`로 외부화하여 관리합니다.
+- 여러 실험을 반복할 때 코드를 수정하지 않고 설정 파일만 바꾸면 됩니다.
+
+```yaml
+# configs/config.yaml
+train_path: "./data/train.csv"
+batch_size: 64
+epochs: 10
+lr: 0.001
+```
+
+```python
+# main.py
+cfg = load_config()
+train_df = pd.read_csv(cfg['train_path'])
+```
+
+#### 확장성 우수
+- 새로운 모델 추가, 앙상블 실험, AutoML 도입 등 구조 확장이 용이합니다.
+- 모델 이름에 따라 실행될 클래스를 바꾸는 방식으로 `train.py`를 확장할 수 있습니다.
+
+```python
+# train.py (예시)
+if cfg['model'] == 'JK':
+    model = JKModel(...)
+elif cfg['model'] == 'LGBM':
+    model = LGBMClassifier(...)
+```
+
+---
 
 ### 단점
 
-- **초기 진입 장벽**: 디렉토리 구조와 모듈 연결에 대한 이해 필요
-- **오버엔지니어링 가능성**: 단일 스크립트 수준의 간단한 실험엔 다소 복잡할 수 있음
-- **디버깅 난이도 상승**: 오류 발생 시 여러 모듈 추적 필요
+#### 초기 진입 장벽
+- `main.py`부터 시작해 `train.py`, `models/`, `utils/`로 이어지는 호출 흐름을 처음 접한 사람은 전체 구조를 이해하는 데 시간이 필요합니다.
+
+```
+실행 흐름 예시:
+main.py → train.py → models/JK_model.py → utils/preprocessing.py → datasets/tabular_dataset.py
+```
+
+#### 오버엔지니어링 가능성
+- 간단한 실험에도 구조가 분리되어 있어 단일 스크립트보다 복잡해질 수 있습니다.
+- 예: 단일 `.py`로 구현 가능한 실험이 5개 이상의 파일로 나뉘어 있음
+
+```
+main.py → train.py → model.py + preprocessing.py + dataset.py
+```
+
+#### 디버깅 난이도 상승
+- 예측 결과 이상 발생 시 여러 모듈을 거슬러 올라가며 원인을 추적해야 합니다.
+- 학습 결과가 이상하면 모델 구조, 데이터 전처리, Dataset 등 여러 파일을 확인해야 합니다.
+
+```python
+# train.py
+output = model(xb)  # model, dataset, preprocessing 모두 연결됨
+```
 
 ---
 
